@@ -1,20 +1,6 @@
 name: build frpc
 
 on:
-  push:
-    branches:
-      - dev
-    paths:
-      - 'cmd/frpc/**'
-      - 'client/**'
-      - 'pkg/**'
-      - '.github/workflows/build-frpc.yml'
-  pull_request:
-    paths:
-      - 'cmd/frpc/**'
-      - 'client/**'
-      - 'pkg/**'
-      - '.github/workflows/build-frpc.yml'
   workflow_dispatch:
 
 permissions:
