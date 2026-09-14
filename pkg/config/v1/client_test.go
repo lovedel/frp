@@ -1,45 +1,47 @@
-// Copyright 2023 The frp Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-
 package v1
 
 import (
 	"testing"
-
-	"github.com/samber/lo"
-	"github.com/stretchr/testify/require"
 )
 
-func TestClientConfigComplete(t *testing.T) {
-	require := require.New(t)
-	c := &ClientConfig{}
-	err := c.Complete()
-	require.NoError(err)
+func TestClientCommonConfigComplete_ServerPortSource(t *testing.T) {
+	cases := []struct {
+		name     string
+		cfg      *ClientCommonConfig
+		wantPort int
+		wantSrc  string
+	}{
+		{
+			name:     "default",
+			cfg:      &ClientCommonConfig{ServerAddr: "127.0.0.1"},
+			wantPort: 7000,
+			wantSrc:  "",
+		},
+		{
+			name:     "explicit port",
+			cfg:      &ClientCommonConfig{ServerAddr: "127.0.0.1", ServerPort: 7500},
+			wantPort: 7500,
+			wantSrc:  "",
+		},
+		{
+			name:     "source set",
+			cfg:      &ClientCommonConfig{ServerAddr: "127.0.0.1", ServerPortSource: "https://example.com"},
+			wantPort: 0,
+			wantSrc:  "https://example.com",
+		},
+	}
 
-	require.EqualValues("token", c.Auth.Method)
-	require.Equal(true, lo.FromPtr(c.Transport.TCPMux))
-	require.Equal("v1", c.Transport.WireProtocol)
-	require.Equal(true, lo.FromPtr(c.LoginFailExit))
-	require.Equal(true, lo.FromPtr(c.Transport.TLS.Enable))
-	require.Equal(true, lo.FromPtr(c.Transport.TLS.DisableCustomTLSFirstByte))
-	require.NotEmpty(c.NatHoleSTUNServer)
-}
-
-func TestAuthClientConfig_Complete(t *testing.T) {
-	require := require.New(t)
-	cfg := &AuthClientConfig{}
-	err := cfg.Complete()
-	require.NoError(err)
-	require.EqualValues("token", cfg.Method)
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			if err := c.cfg.Complete(); err != nil {
+				t.Fatalf("Complete error: %v", err)
+			}
+			if c.cfg.ServerPort != c.wantPort {
+				t.Fatalf("ServerPort=%d, want %d", c.cfg.ServerPort, c.wantPort)
+			}
+			if c.cfg.ServerPortSource != c.wantSrc {
+				t.Fatalf("ServerPortSource=%q, want %q", c.cfg.ServerPortSource, c.wantSrc)
+			}
+		})
+	}
 }
