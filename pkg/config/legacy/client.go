@@ -37,9 +37,10 @@ type ClientCommonConf struct {
 	// ServerAddr specifies the address of the server to connect to. By
 	// default, this value is "0.0.0.0".
 	ServerAddr string `ini:"server_addr" json:"server_addr"`
-	// ServerPort specifies the port to connect to the server on. By default,
-	// this value is 7000.
-	ServerPort int `ini:"server_port" json:"server_port"`
+	// ServerPort specifies the port to connect to the server on. It can be a
+	// numeric string, an HTTP(S) URL, or a domain name whose TXT record
+	// contains a port number.
+	ServerPort string `ini:"server_port" json:"server_port"`
 	// STUN server to help penetrate NAT hole.
 	NatHoleSTUNServer string `ini:"nat_hole_stun_server" json:"nat_hole_stun_server"`
 	// The maximum amount of time a dial to server will wait for a connect to complete.
@@ -348,6 +349,7 @@ func copySection(source, target *ini.Section) {
 func GetDefaultClientConf() ClientCommonConf {
 	return ClientCommonConf{
 		ClientConfig:              legacyauth.GetDefaultClientConf(),
+		ServerPort:                "7000",
 		TCPMux:                    true,
 		LoginFailExit:             true,
 		Protocol:                  "tcp",

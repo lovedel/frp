@@ -46,6 +46,11 @@ type ClientCommonConfig struct {
 	// ServerPort specifies the port to connect to the server on. By default,
 	// this value is 7000.
 	ServerPort int `json:"serverPort,omitempty"`
+	// ServerPortSource specifies a dynamic source for the server port. It can
+	// be an HTTP(S) URL that returns a port number, or a domain name whose TXT
+	// record contains a port number. When set, it takes precedence over
+	// ServerPort and is resolved before each connection attempt.
+	ServerPortSource string `json:"serverPortSource,omitempty"`
 	// STUN server to help penetrate NAT hole.
 	NatHoleSTUNServer string `json:"natHoleStunServer,omitempty"`
 	// DNSServer specifies a DNS server address for FRPC to use. If this value
@@ -84,7 +89,9 @@ type ClientCommonConfig struct {
 
 func (c *ClientCommonConfig) Complete() error {
 	c.ServerAddr = util.EmptyOr(c.ServerAddr, "0.0.0.0")
-	c.ServerPort = util.EmptyOr(c.ServerPort, 7000)
+	if c.ServerPortSource == "" {
+		c.ServerPort = util.EmptyOr(c.ServerPort, 7000)
+	}
 	c.LoginFailExit = util.EmptyOr(c.LoginFailExit, lo.ToPtr(true))
 	c.NatHoleSTUNServer = util.EmptyOr(c.NatHoleSTUNServer, "stun.easyvoip.com:3478")
 

@@ -15,6 +15,7 @@
 package v1
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"reflect"
@@ -152,6 +153,32 @@ func DecodeVisitorPluginOptionsJSON(b []byte, options DecodeOptions) (TypedVisit
 }
 
 func DecodeClientConfigJSON(b []byte, options DecodeOptions) (ClientConfig, error) {
+	// Preprocess serverPort to support dynamic sources (URL/domain) specified as string.
+	if !isJSONNull(b) {
+		var rawMap map[string]jsonx.RawMessage
+		if err := jsonx.Unmarshal(b, &rawMap); err == nil && rawMap != nil {
+			if raw, ok := rawMap["serverPort"]; ok && !isJSONNull(raw) {
+				var v any
+				if err := jsonx.Unmarshal(raw, &v); err == nil {
+					switch val := v.(type) {
+					case float64:
+						// Keep as number.
+					case string:
+						rawMap["serverPort"] = jsonx.RawMessage([]byte("0"))
+						rawMap["serverPortSource"] = jsonx.RawMessage([]byte("\"" + val + "\""))
+						var err error
+						b, err = json.Marshal(rawMap)
+						if err != nil {
+							return ClientConfig{}, err
+						}
+					default:
+						return ClientConfig{}, fmt.Errorf("invalid serverPort type: %T", v)
+					}
+				}
+			}
+		}
+	}
+
 	type rawClientConfig struct {
 		ClientCommonConfig
 		Proxies  []jsonx.RawMessage `json:"proxies,omitempty"`

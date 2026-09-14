@@ -15,6 +15,7 @@
 package legacy
 
 import (
+	"strconv"
 	"strings"
 
 	"github.com/samber/lo"
@@ -42,7 +43,13 @@ func Convert_ClientCommonConf_To_v1(conf *ClientCommonConf) *v1.ClientCommonConf
 	out.Auth.OIDC.AdditionalEndpointParams = conf.OidcAdditionalEndpointParams
 
 	out.ServerAddr = conf.ServerAddr
-	out.ServerPort = conf.ServerPort
+	if port, err := strconv.Atoi(conf.ServerPort); err == nil {
+		out.ServerPort = port
+	} else if conf.ServerPort != "" {
+		out.ServerPortSource = conf.ServerPort
+	} else {
+		out.ServerPort = 7000
+	}
 	out.NatHoleSTUNServer = conf.NatHoleSTUNServer
 	out.Transport.DialServerTimeout = conf.DialServerTimeout
 	out.Transport.DialServerKeepAlive = conf.DialServerKeepAlive

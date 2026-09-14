@@ -17,6 +17,7 @@ package client
 import (
 	"context"
 	"crypto/tls"
+	"fmt"
 	"net"
 	"strconv"
 	"strings"
@@ -99,6 +100,14 @@ func NewConnector(ctx context.Context, cfg *v1.ClientCommonConfig) Connector {
 // If TCPMux isn't enabled, the underlying connection is nil, you will get a new real TCP connection every time you call Connect().
 func (c *defaultConnectorImpl) Open() error {
 	xl := xlog.FromContextSafe(c.ctx)
+
+	if c.cfg.ServerPortSource != "" {
+		resolvedPort, err := netpkg.ResolveServerPortSource(c.ctx, c.cfg.ServerPortSource)
+		if err != nil {
+			return fmt.Errorf("resolve server port from source %q: %w", c.cfg.ServerPortSource, err)
+		}
+		c.cfg.ServerPort = resolvedPort
+	}
 
 	// special for quic
 	if strings.EqualFold(c.cfg.Transport.Protocol, "quic") {
